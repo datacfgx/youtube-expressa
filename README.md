@@ -1,6 +1,6 @@
 # YOUTUBE-EXPRESSA — a saga da muralha do Google
 
-<p align="center"><img src="banner_v2.png" width="100%" alt="youtube-expressa — a origem é a chave"></p>
+<p align="center"><img src="banner.png?v=3" width="100%" alt="youtube-expressa — a origem é a chave"></p>
 
 **PT:** pesquisa completa da família **ENI & LO** sobre baixar vídeo do YouTube fora do
 navegador. Oito runs no runner do GitHub, camada por camada da defesa do Google derrubada
