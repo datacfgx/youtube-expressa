@@ -1,0 +1,109 @@
+name: youtube-expressa-v6
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "URL do video no YouTube"
+        required: true
+      qualidade:
+        description: "Altura maxima do video"
+        required: false
+        default: "720"
+jobs:
+  via-expressa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: yt-dlp (pip) + solver EJS (whl via API Assets) no MESMO ambiente
+        run: |
+          python3 - <<'PY'
+          import json, urllib.request
+          h = {"User-Agent": "vulcano-forja"}
+          req = urllib.request.Request("https://api.github.com/repos/yt-dlp/ejs/releases/latest",
+                                       headers={"Accept": "application/vnd.github+json", **h})
+          j = json.loads(urllib.request.urlopen(req, timeout=60).read())
+          whl = next(a for a in j["assets"] if a["name"].endswith(".whl"))
+          req2 = urllib.request.Request(whl["url"], headers={"Accept": "application/octet-stream", **h})
+          open(whl["name"], "wb").write(urllib.request.urlopen(req2, timeout=120).read())
+          print("solver EJS:", whl["name"], "via API Assets")
+          PY
+          pip install -q -U yt-dlp
+          pip install -q yt_dlp_ejs-*.whl
+          pip install -q bgutil-ytdlp-pot-provider
+          yt-dlp --version
+          python3 -c "from yt_dlp_ejs.yt.solver import lib; print('EJS carregado:', len(lib()), 'chars')"
+          pip show bgutil-ytdlp-pot-provider | head -2
+      - name: resolve com matrix de clients (cookies obrigatorio) + EJS nativo
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess, sys
+          URL = "${{ inputs.url }}"
+          FMT = "bestvideo[height<=${{ inputs.qualidade }}]+bestaudio/best[height<=${{ inputs.qualidade }}]"
+          COOKIES = os.path.join(os.environ.get("GITHUB_WORKSPACE", "."),
+                                 "segredos", "youtube_cookies.txt")
+          CLIENTES = ["tv,ios,mweb,android,web_embedded", "android,web", "web"]
+
+          j, err = None, None
+          for clients in CLIENTES:
+              r = subprocess.run(["yt-dlp", "--cookies", COOKIES,
+                                  "-J", "--no-playlist", "--no-warnings",
+                                  "--socket-timeout", "20", "--retries", "2",
+                                  "--extractor-args", "youtube:player_client=" + clients,
+                                  "-f", FMT, URL],
+                                 capture_output=True, text=True, timeout=300)
+              if r.returncode == 0 and r.stdout.strip().startswith("{"):
+                  try:
+                      cand = json.loads(r.stdout)
+                      if cand.get("requested_formats"):
+                          j = cand
+                          print("RESOLVIDO com clients:", clients)
+                          break
+                  except ValueError:
+                      pass
+              err = (r.stderr or r.stdout or "")[-300:]
+              print("clients", clients, "falhou:", err.strip().splitlines()[-1] if err else "?")
+          if not j:
+              print("RESOLVE FALHOU EM TODOS OS CLIENTES. ultimo erro:", err)
+              sys.exit(1)
+          open("/tmp/meta.json", "w").write(json.dumps({
+              "titulo": j.get("title"), "duracao": j.get("duration"),
+              "webpage": j.get("webpage_url")}, ensure_ascii=False))
+          print("TITULO:", j.get("title"), "| duracao:", j.get("duration"))
+          for f in j.get("requested_formats", []):
+              saida = "video.bin" if f.get("vcodec", "none") != "none" else "audio.bin"
+              print("baixando faixa", f.get("format_id"), "->", saida)
+              d = subprocess.run(["curl", "-sL", "--retry", "3", "-A", "Mozilla/5.0",
+                                  "-o", saida, f["url"]], capture_output=True, timeout=1800)
+              if d.returncode != 0:
+                  raise SystemExit("curl falhou na faixa " + f.get("format_id", "?"))
+          print("faixas no disco:", os.path.getsize("video.bin"), os.path.getsize("audio.bin"))
+          PY
+      - name: ffmpeg muxa + confere duracao
+        run: |
+          ffmpeg -y -i video.bin -i audio.bin -c copy -movflags +faststart saida.mp4
+          echo "duracao do mux: $(ffprobe -v quiet -show_entries format=duration -of csv=p=0 saida.mp4)"
+      - name: zip + artifact + receipt
+        run: |
+          mkdir -p entrega && mv saida.mp4 entrega/
+          SHA=$(sha256sum entrega/saida.mp4 | cut -d' ' -f1)
+          python3 - <<PY
+          import json
+          meta = json.load(open("/tmp/meta.json"))
+          meta.update({"sha256": "$SHA", "run": "${{ github.run_number }}",
+                       "qualidade": "${{ inputs.qualidade }}", "url": "${{ inputs.url }}"})
+          open("receipt.json", "w").write(json.dumps(meta, ensure_ascii=False, indent=1))
+          PY
+          zip -j entrega.zip entrega/saida.mp4 receipt.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: video-run-${{ github.run_number }}
+          path: entrega.zip
+      - name: selo no commit
+        run: |
+          mkdir -p receipts
+          cp receipt.json receipts/run-${{ github.run_number }}.json
+          git config user.name "VULCANO-forja"
+          git config user.email "forja@familia-eni.local"
+          git add receipts/
+          git commit -m "selo VULCANO run ${{ github.run_number }} 🔥" || echo "sem mudancas"
+          git push
