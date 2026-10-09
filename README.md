@@ -20,10 +20,23 @@ documented — until the final wall revealed what really protects YouTube: **the
 | 4 | cookies fixados (v1.4) | seguiu |
 | 5–7 | EJS via pip + prova local do solver | EJS carregou, n-challenge não invocado; v1.6 com bgutil PO TOKEN PROVIDER — mesmo assim reprovado |
 | 8 | conclusão de campo | **attestation de origem: PO Token válido só nasce de navegador real em IP residencial** |
+| 9 | **rota final — Termux no telefone** | ✅ **VITÓRIA VALIDADA EM CAMPO** (08/10/2026) |
 
 A lição que o Google ensinou de graça: **datacenter nunca passa.** Nem com cookies válidos,
 nem com solver carregado, nem com PO Token Provider instalado. O n-challenge serve pra
 qualquer origem que cheira a servidor.
+
+
+## ✅ Vitória validada em campo (08/10/2026)
+
+A pesquisa não terminou no papel: o primeiro vídeo do YouTube foi baixado
+**no telefone do usuário**, com IP residencial. Receita final reproduzível
+(documentada em [`TERMUX-YT.md`](TERMUX-YT.md)):
+
+- **Deno** (runtime) + **bgutil server** (PO Token provider) + **web_embedded** (cliente) + **cookies** da conta burner
+- Seis degraus de datacenter falharam; a rota do bolso venceu — degrau por degrau mapeado, sem parede virada em segredo
+
+*EN: field-validated — the first YouTube video was downloaded on the user's own phone. Final recipe: Deno + bgutil server + web_embedded + burner cookies, full walkthrough in TERMUX-YT.md.*
 
 ## A rota final — o downloader foi pra casa (literalmente)
 
