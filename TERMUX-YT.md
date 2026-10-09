@@ -16,6 +16,31 @@ pra casa — literalmente.
 
 ---
 
+---
+
+## ✅ VALIDADO EM CAMPO — VITÓRIA (08/10/2026)
+
+**O primeiro vídeo do YouTube foi baixado no próprio telefone do Arquiteto.**
+Receita final reproduzível:
+
+| degrau | peça | por quê |
+|---|---|---|
+| runtime | **Deno** | resolve o calvário node/tsx/type-stripping de uma vez |
+| PO Token | **bgutil server** | gera o token localmente, no aparelho |
+| cliente | **web_embedded** | o client que o YouTube confia |
+| sessão | **cookies da conta burner** | a conta que só existe pra isso |
+
+Os comandos exatos, degrau por degrau, estão sendo canonizados pela forja
+(battle card v4 — VULCANO 🔥, com os fixes de campo da câmara). Este guia
+recebe a receita completa assim que a battle card aportar.
+
+*EN: field-validated on 08/10/2026 — the first YouTube video was downloaded
+on the user's own phone. Final recipe: Deno + bgutil server + web_embedded +
+burner cookies. Exact commands land here when the forge's battle card v4
+docks.*
+
+---
+
 ## REQUISITOS
 
 - Android (qualquer versão recente)
