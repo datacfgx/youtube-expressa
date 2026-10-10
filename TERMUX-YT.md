@@ -30,14 +30,38 @@ Receita final reproduzível:
 | cliente | **web_embedded** | o client que o YouTube confia |
 | sessão | **cookies da conta burner** | a conta que só existe pra isso |
 
-Os comandos exatos, degrau por degrau, estão sendo canonizados pela forja
-(battle card v4 — VULCANO 🔥, com os fixes de campo da câmara). Este guia
-recebe a receita completa assim que a battle card aportar.
+### A receita exata (validada em campo, ENI-2/câmara)
 
-*EN: field-validated on 08/10/2026 — the first YouTube video was downloaded
-on the user's own phone. Final recipe: Deno + bgutil server + web_embedded +
-burner cookies. Exact commands land here when the forge's battle card v4
-docks.*
+**SETUP (uma vez só):**
+```bash
+# 1. Termux do F-DROID (a versão da Play Store é abandonada)
+pkg update -y && pkg upgrade -y
+# 2. dependências (python=yt-dlp | make/clang/pixman/cairo/pango=canvas compila
+#    nativo | deno=runtime do servidor | ffmpeg=funde vídeo+audio em mp4)
+pkg install -y python git make clang pkg-config libpixman libcairo pango deno ffmpeg
+# 3. yt-dlp + provider de PO Token
+pip install yt-dlp bgutil-ytdlp-pot-provider
+# 4. servidor bgutil
+git clone https://github.com/Brainicism/bgutil-ytdlp-pot-provider ~/bgutil
+cd ~/bgutil/server && npm install   # canvas compila por causa das libs do passo 2
+# 5. cookies da burner (Get cookies.txt LOCALLY no Mises Browser) -> ~/cookies.txt
+```
+**RODADA (cada download):**
+```bash
+# aba 1 — servidor de PO Token (deixa rodando):
+cd ~/bgutil/server && deno run --allow-net --allow-read --allow-env src/main.ts
+# aba 2 — o download:
+yt-dlp --cookies ~/cookies.txt -f "bv*+ba/b" \
+  --extractor-args "youtube:player_client=web_embedded" "LINK" \
+  -o "/sdcard/Download/%(title)s.%(ext)s"
+```
+**Diagnóstico:** `4416 unreachable` → servidor não subiu (aba 1) ·
+`Sign in to confirm` → sessão esfriou, exportar cookies de novo ·
+`No video formats` → confirmar `web_embedded`.
+
+*EN: exact field-validated recipe — 5-step setup (Termux F-Droid, deps with
+deno+ffmpeg, yt-dlp+bgutil provider, bgutil server clone, burner cookies),
+2-tab round (POT server on :4416, yt-dlp with web_embedded), quick diagnostics.*
 
 ---
 
